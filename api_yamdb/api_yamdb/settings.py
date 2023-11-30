@@ -24,7 +24,8 @@ INSTALLED_APPS = [
     'reviews',
     'rest_framework',
     'django_filters',
-    'api'
+    'api',
+    'user.apps.UserConfig',
 ]
 
 MIDDLEWARE = [
@@ -106,6 +107,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
+AUTH_USER_MODEL = 'user.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -116,3 +118,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+LENGTH_TEXT = 15
+LIST_PER_PAGE = 10
