@@ -2,12 +2,15 @@ from rest_framework import viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 
-from reviews.models import Title, Genre, Category
-from .serializers import (
+from reviews.models import Title, Genre, Category, Review, Comment
+from api.serializers import (
     TitleSerializer,
     GenreSerializer,
     CategorySerializer,
+    ReviewSerializer,
+    CommentSerializer
 )
 
 
@@ -38,3 +41,33 @@ class CategoryViewSet(viewsets.GenericViewSet,
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('slug',)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return self.get_title().reviews.all()
+
+    def get_title(self):
+        title_id = self.kwargs.get('title_id')
+        return get_object_or_404(Title, pk=title_id)
+
+    def perform_create(self, serializer):
+        serializer.save(title=self.get_title())
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
+
+    def get_review(self):
+        review_id = self.kwargs.get('review_id')
+        return get_object_or_404(Review, pk=review_id)
+
+    def perform_create(self, serializer):
+        serializer.save(review=self.get_review())
