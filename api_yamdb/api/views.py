@@ -1,6 +1,7 @@
 from typing import Any
 
 from django_filters.rest_framework import DjangoFilterBackend
+
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
@@ -16,6 +17,8 @@ from rest_framework.request import Request
 from rest_framework_simplejwt.tokens import Token, RefreshToken
 from rest_framework.pagination import LimitOffsetPagination
 
+from reviews.models import Title, Genre, Category, Review, Comment
+from users.models import User
 from .mixins import AddPermissionsMixin, CreateListDestroySearchViewSet
 from .permissions import (
     IsAdminOnly,
@@ -32,11 +35,11 @@ from .serializers import (
     UserRegistrationSerializer,
     UserTokenSerializer,
     UserSerializer,
+    ReviewSerializer,
+    CommentSerializer,
 )
 from .utils import send_confirmation_code
 from constants import LENGTH_CODE
-from reviews.models import Title, Category, Genre
-from users.models import User
 
 
 class TitleViewSet(AddPermissionsMixin, viewsets.ModelViewSet):
@@ -126,3 +129,32 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return self.get_title().reviews.all()
+
+    def get_title(self):
+        title_id = self.kwargs.get('title_id')
+        return get_object_or_404(Title, pk=title_id)
+
+    def perform_create(self, serializer):
+        serializer.save(title=self.get_title())
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
+
+    def get_review(self):
+        review_id = self.kwargs.get('review_id')
+        return get_object_or_404(Review, pk=review_id)
+
+    def perform_create(self, serializer):
+        serializer.save(review=self.get_review())

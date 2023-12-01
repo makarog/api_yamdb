@@ -7,9 +7,8 @@ from django.db.utils import IntegrityError
 from rest_framework import serializers, status
 from rest_framework.response import Response
 
-
 from constants import LENGTH_CODE, ADMIN
-from reviews.models import Title, Genre, Category
+from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
 
 
@@ -39,8 +38,9 @@ class GenreSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Genre
+        model = Category
         fields = ('name', 'slug')
+
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -137,3 +137,16 @@ class UserSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(
             'Назначать роль может только администратор.'
         )
+
+class ReviewSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
