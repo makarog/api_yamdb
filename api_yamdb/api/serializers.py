@@ -1,13 +1,9 @@
 import datetime as dt
-from typing import Any, Union
-
+from typing import Any
+from rest_framework import serializers
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.cache import cache
 from django.db.utils import IntegrityError
-from rest_framework import serializers, status
-from rest_framework.response import Response
 
-from constants import LENGTH_CODE, ADMIN
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
 
@@ -42,8 +38,56 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class UsersSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки запросов к модели User."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[
+            UnicodeUsernameValidator()
+        ]
+    )
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role')
+
+    def validate_role(self, value: str) -> str:
+        """Проверяет, имеет ли текущий пользователь право назначать роли."""
+        user: User = self.context['request'].user
+        if user.is_staff or user.is_admin:
+            return value
+        raise serializers.ValidationError(
+            'Назначать роль может только администратор.'
+        )
+
+
+class NotAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role')
+        read_only_fields = ('role',)
+
+
+class GetTokenSerializer(serializers.ModelSerializer):
+    """Сериализатор для подтверждения токенов пользователя."""
+    username = serializers.CharField(
+        required=True)
+    confirmation_code = serializers.CharField(
+        required=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'confirmation_code'
+        )
+
+
+class SignUpSerializer(serializers.ModelSerializer):
     """Сериализатор регистрации пользователя."""
     username = serializers.CharField(
         max_length=150,
@@ -55,10 +99,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = (
-            'username',
-            'email'
-        )
+        fields = ('username', 'email')
 
     def create(self, validated_data: dict[str, Any]) -> User:
         """Создает нового пользователя на основе переданных данных."""
@@ -83,60 +124,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             )
         return value
 
-
-class UserTokenSerializer(serializers.ModelSerializer):
-    """Сериализатор для подтверждения токенов пользователя."""
-    confirmation_code = serializers.CharField()
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'confirmation_code'
-        )
-
-    def validate(
-            self, attrs: dict[str, str]
-    ) -> Union[dict[str, str], Response]:
-        """
-        Проверяет существует пользователь с переданым username.
-        Проверяет корректность confirmation_code.
-        """
-        username: str = attrs.get('username')
-        confirmation_code: str = attrs.get('confirmation_code')
-        if not User.objects.filter(username=username).exists():
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        if (
-            len(confirmation_code) != LENGTH_CODE
-            and confirmation_code != cache.get(username)
-        ):
-            raise serializers.ValidationError(
-                'Код подтверждения введен неверно.'
-            )
-        return super().validate(attrs)
-
-
-class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор для обработки запросов к модели User."""
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role',
-        )
-
-    def validate_role(self, value: str) -> str:
-        """Проверяет, имеет ли текущий пользователь право назначать роли."""
-        user: User = self.context['request'].user
-        if user.is_staff or user.role == ADMIN:
-            return value
-        raise serializers.ValidationError(
-            'Назначать роль может только администратор.'
-        )
 
 class ReviewSerializer(serializers.ModelSerializer):
 

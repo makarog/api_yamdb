@@ -1,8 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
 
-from constants import LIFE_CONFIRMATION_CODE
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -51,12 +49,17 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 ROOT_URLCONF = 'api_yamdb.urls'
@@ -132,14 +135,14 @@ STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Cache
+EMAIL_HOST = 'smtp.vg-berry.com'
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_table',
-        'OPTIONS': {
-            'TIMEOUT': LIFE_CONFIRMATION_CODE,
-        }
-    }
-}
+EMAIL_HOST_USER = 'hello@vg-berry.com'
+
+EMAIL_HOST_PASSWORD = 'F4jQijB6vz'
+
+EMAIL_PORT = 587
+
+EMAIL_USE_TLS = True
+
+EMAIL_USE_SSL = False
