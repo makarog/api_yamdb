@@ -1,19 +1,23 @@
 import datetime as dt
 from typing import Any
 from rest_framework import serializers
+from rest_framework.relations import StringRelatedField
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.utils import IntegrityError
+from django.shortcuts import get_object_or_404
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
 
 
 class TitleSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = ('name', 'year',
-                  'description', 'genres', 'category')
+                  'description', 'genres', 'category',
+                  'rating')
 
     def validate_year(self, value):
         current_year = dt.date.today().year
@@ -126,14 +130,30 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    author = StringRelatedField(read_only=True)
 
     class Meta:
         model = Review
         fields = '__all__'
+        read_only_fields = ('author', 'title')
+
+
+    def validate(self, data):
+        if self.context.get('request').method != 'POST':
+            return data
+        user = self.context.get('request').user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        if Review.objects.filter(author=user, title=title).exists():
+            raise serializers.ValidationError(
+                'Вы уже оставляли отзыв на это произведение.')
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author = StringRelatedField(read_only=True)
 
     class Meta:
         model = Comment
         fields = '__all__'
+        read_only_fields = ('author', 'review')

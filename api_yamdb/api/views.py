@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets, filters
 from rest_framework.decorators import action
@@ -35,7 +36,7 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     serializer_class = TitleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     pagination_class = LimitOffsetPagination
@@ -153,7 +154,9 @@ class APISignup(APIView):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    pagination_class = LimitOffsetPagination
+    """pagination_class = LimitOffsetPagination"""
+    permission_classes = (AdminModeratorAuthorPermission,)
+    http_method_names = ('get', 'post', 'delete', 'patch')
 
     def get_queryset(self):
         return self.get_title().reviews.all()
@@ -163,12 +166,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Title, pk=title_id)
 
     def perform_create(self, serializer):
-        serializer.save(title=self.get_title())
+        serializer.save(title=self.get_title(), author=self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    pagination_class = LimitOffsetPagination
+    """pagination_class = LimitOffsetPagination"""
+    permission_classes = (AdminModeratorAuthorPermission,)
+    http_method_names = ('get', 'post', 'delete', 'patch')
 
     def get_queryset(self):
         return self.get_review().comments.all()
@@ -178,4 +183,4 @@ class CommentViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Review, pk=review_id)
 
     def perform_create(self, serializer):
-        serializer.save(review=self.get_review())
+        serializer.save(review=self.get_review(), author=self.request.user)
