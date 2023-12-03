@@ -1,6 +1,7 @@
 import datetime as dt
 from typing import Any
 from rest_framework import serializers
+from rest_framework.serializers import SlugRelatedField
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.utils import IntegrityError
 
@@ -8,34 +9,58 @@ from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
 
 
-class TitleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Title
-        fields = ('name', 'year',
-                  'description', 'genres', 'category')
-
-    def validate_year(self, value):
-        current_year = dt.date.today().year
-        if value > current_year:
-            raise serializers.ValidationError(
-                'Год выпуска не может быть больше текущего'
-            )
-        return value
-
-
 class GenreSerializer(serializers.ModelSerializer):
-
+    """Сериализатор для обработки запросов к модели Genre."""
     class Meta:
         model = Genre
         fields = ('name', 'slug')
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
+    """Сериализатор для обработки запросов к модели Category."""
     class Meta:
         model = Category
         fields = ('name', 'slug')
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки запросов к модели Title."""
+    genre = GenreSerializer(many=True, required=True)
+    category = CategorySerializer(required=True)
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year',
+                  'description', 'genre', 'category', 'rating')
+
+    def get_rating(self, obj):
+        """Получаем rating из аннотации queryset."""
+        return getattr(obj, 'rating', None)
+
+
+class TitleCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки POST запросов к модели Title."""
+    genre = SlugRelatedField(
+        queryset=Genre.objects.all(),
+        many=True, required=True, slug_field='slug')
+    category = SlugRelatedField(
+        queryset=Category.objects.all(),
+        required=True, slug_field='slug')
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year',
+                  'description', 'genre', 'category')
+
+    def validate_year(self, value):
+        """Проверяем на корректность ввода года выпуска."""
+        current_year = dt.date.today().year
+        if value > current_year:
+            raise serializers.ValidationError(
+                'Год выпуска не может быть больше текущего'
+            )
+        return value
 
 
 class UsersSerializer(serializers.ModelSerializer):
