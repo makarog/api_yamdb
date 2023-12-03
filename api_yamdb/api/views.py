@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status, viewsets, filters
+from rest_framework import permissions, status, viewsets, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
@@ -11,10 +11,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
+from django.db.models import Avg
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
-from .mixins import ModelMixinSet
+from .filters import TitleFilterSet
 from .permissions import (
     AdminModeratorAuthorPermission,
     AdminOnly,
@@ -24,6 +25,7 @@ from .serializers import (
     TitleSerializer,
     GenreSerializer,
     CategorySerializer,
+    TitleCreateSerializer,
 
     NotAdminSerializer,
     SignUpSerializer,
@@ -36,30 +38,48 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
-    serializer_class = TitleSerializer
+    queryset = Title.objects.all()
+    http_method_names = ('get', 'post', 'patch', 'delete',)
     permission_classes = (IsAdminUserOrReadOnly,)
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genres__slug', 'name', 'year')
+    filterset_class = TitleFilterSet
+
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PATCH'):
+            return TitleCreateSerializer
+        return TitleSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(rating=Avg('reviews__score'))
+        return queryset
 
 
-class GenreViewSet(ModelMixinSet):
+class GenreViewSet(viewsets.GenericViewSet,
+                   mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin):
     queryset = Genre.objects.all()
+    lookup_field = 'slug'
     serializer_class = GenreSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('slug',)
+    search_fields = ('name',)
 
 
-class CategoryViewSet(ModelMixinSet):
+class CategoryViewSet(viewsets.GenericViewSet,
+                      mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin):
     queryset = Category.objects.all()
+    lookup_field = 'slug'
     serializer_class = CategorySerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('slug',)
+    search_fields = ('name',)
 
 
 class UsersViewSet(viewsets.ModelViewSet):

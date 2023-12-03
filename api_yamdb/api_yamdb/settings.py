@@ -133,7 +133,9 @@ STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
 # EMAIL BACKEND
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
 EMAIL_HOST = 'smtp.vg-berry.com'
 
