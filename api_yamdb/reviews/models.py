@@ -1,6 +1,10 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
@@ -47,7 +51,8 @@ class Review(models.Model):
         verbose_name='Произведение'
     )
     text = models.TextField(verbose_name='Отзыв')
-    #author = models.ForeignKey()
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name='reviews')
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         verbose_name='Оценка'
@@ -66,7 +71,8 @@ class Comment(models.Model):
         verbose_name='Отзыв'
     )
     text = models.TextField(verbose_name='Комментарий')
-    #author = models.ForeignKey()
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name='comments')
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
