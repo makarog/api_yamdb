@@ -4,6 +4,7 @@ from typing import Any
 from rest_framework import serializers
 from rest_framework.serializers import SlugRelatedField
 from rest_framework.relations import StringRelatedField
+from rest_framework.validators import UniqueValidator
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
@@ -71,6 +72,7 @@ class UsersSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         max_length=150,
         validators=[
+            UniqueValidator(queryset=User.objects.all()),
             UnicodeUsernameValidator()
         ]
     )
@@ -131,6 +133,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict[str, Any]) -> User:
         """Создает нового пользователя на основе переданных данных."""
+
         try:
             user, _ = User.objects.get_or_create(
                 username=validated_data.get('username'),

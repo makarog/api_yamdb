@@ -28,7 +28,7 @@ class Title(models.Model):
     description = models.TextField(verbose_name='Описание', blank=False)
     genre = models.ManyToManyField(
         Genre,
-        related_name='genres',
+        related_name='genre',
         verbose_name='Жанры'
     )
     category = models.ForeignKey(
@@ -61,6 +61,7 @@ class Review(models.Model):
 
     class Meta:
         ordering = ('pub_date',)
+        unique_together=('author', 'title')
 
 
 class Comment(models.Model):
