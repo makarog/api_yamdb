@@ -1,6 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets, filters, mixins
 from rest_framework.decorators import action
@@ -13,7 +12,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from django.db.models import Avg
 
-from reviews.models import Title, Genre, Category, Review, Comment
+from reviews.models import Title, Genre, Category, Review
 from users.models import User
 from .filters import TitleFilterSet
 from .permissions import (
@@ -26,12 +25,9 @@ from .serializers import (
     GenreSerializer,
     CategorySerializer,
     TitleCreateSerializer,
-
-    NotAdminSerializer,
     SignUpSerializer,
     UsersSerializer,
     GetTokenSerializer,
-
     ReviewSerializer,
     CommentSerializer,
 )

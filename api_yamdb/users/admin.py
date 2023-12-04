@@ -13,6 +13,3 @@ class UserAdmin(admin.ModelAdmin):
     @admin.display(description='role')
     def role(self, obj):
         return obj.role
-
-
-
