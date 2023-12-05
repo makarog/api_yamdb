@@ -31,7 +31,7 @@ class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов к модели Title."""
     genre = GenreSerializer(many=True, required=True)
     category = CategorySerializer(required=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField()
 
     class Meta:
         model = Title
@@ -41,6 +41,15 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         """Получаем rating из аннотации queryset."""
         return getattr(obj, 'rating', None)
+
+    def to_representation(self, instance):
+        """Переопределение to_representation для запросов."""
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            # Используем TitleCreateSerializer для ответов на POST запросы
+            return TitleCreateSerializer(instance, context=self.context).to_representation(instance)
+        # Используем текущий TitleSerializer для всех других запросов
+        return super().to_representation(instance)
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):

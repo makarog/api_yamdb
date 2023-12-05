@@ -1,30 +1,37 @@
+import datetime as dt
+
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+
+from .constants import CONST_FOR_LENGTH
 
 User = get_user_model()
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=256)
+class BaseModel(models.Model):
+    name = models.CharField(max_length=CONST_FOR_LENGTH)
     slug = models.SlugField(unique=True, max_length=50, allow_unicode=False)
+
+    class Meta:
+        abstract = True
 
     def __str__(self):
         return self.name
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True, max_length=50, allow_unicode=False)
+class Category(BaseModel):
+    pass
 
-    def __str__(self):
-        return self.name
+
+class Genre(BaseModel):
+    pass
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256, verbose_name='Название')
-    year = models.IntegerField(verbose_name='Год выпуска')
+    name = models.CharField(max_length=CONST_FOR_LENGTH, verbose_name='Название')
+    year = models.PositiveSmallIntegerField(verbose_name='Год выпуска', db_index=True)
     description = models.TextField(verbose_name='Описание', blank=False)
     genre = models.ManyToManyField(
         Genre,
@@ -41,6 +48,12 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        """Проверяем на корректность ввода года выпуска."""
+        current_year = dt.date.today().year
+        if self.year > current_year:
+            raise ValidationError('Год выпуска не может быть больше текущего')
 
 
 class Review(models.Model):
