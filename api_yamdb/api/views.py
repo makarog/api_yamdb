@@ -119,19 +119,21 @@ class APIGetToken(APIView):
         serializer = GetTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        try:
-            user = User.objects.get(username=data['username'])
-        except User.DoesNotExist:
+
+        user = User.objects.filter(username=data['username']).first()
+        if not user:
             return Response(
                 {'username': 'Пользователь не найден!'},
                 status=status.HTTP_404_NOT_FOUND)
-        if data.get('confirmation_code') == user.confirmation_code:
-            token = RefreshToken.for_user(user).access_token
-            return Response({'token': str(token)},
-                            status=status.HTTP_201_CREATED)
-        return Response(
-            {'confirmation_code': 'Неверный код подтверждения!'},
-            status=status.HTTP_400_BAD_REQUEST)
+
+        if data.get('confirmation_code') != user.confirmation_code:
+            return Response(
+                {'confirmation_code': 'Неверный код подтверждения!'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        token = RefreshToken.for_user(user).access_token
+        return Response({'token': str(token)},
+                        status=status.HTTP_201_CREATED)
 
 
 class APISignup(APIView):
