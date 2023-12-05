@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
-
+import os
+import dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,6 +14,10 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'users.User'
+
+dotenv_file = os.path.join(BASE_DIR, ".env")
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
 # Application definition
 
@@ -137,14 +142,14 @@ EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
-EMAIL_HOST = 'smtp.vg-berry.com'
+EMAIL_HOST = os.environ['EMAIL_HOST_USER']
 
-EMAIL_HOST_USER = 'hello@vg-berry.com'
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
 
-EMAIL_HOST_PASSWORD = 'F4jQijB6vz'
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 
 EMAIL_PORT = 587
 
-EMAIL_USE_TLS = True
-
 EMAIL_USE_SSL = False
+
+EMAIL_USE_TLS = True
