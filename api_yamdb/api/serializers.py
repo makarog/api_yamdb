@@ -43,7 +43,9 @@ class TitleSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.method == 'POST':
             # Используем TitleCreateSerializer для ответов на POST запросы
-            return TitleCreateSerializer(instance, context=self.context).to_representation(instance)
+            return TitleCreateSerializer(
+                (instance, context=self.context).to_representation(instance)
+            )
         # Используем текущий TitleSerializer для всех других запросов
         return super().to_representation(instance)
 
