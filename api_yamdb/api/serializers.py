@@ -42,15 +42,6 @@ class TitleSerializer(serializers.ModelSerializer):
         """Получаем rating из аннотации queryset."""
         return getattr(obj, 'rating', None)
 
-    def to_representation(self, instance):
-        """Переопределение to_representation для запросов."""
-        request = self.context.get('request')
-        if request and request.method == 'POST':
-            # Используем TitleCreateSerializer для ответов на POST запросы
-            return TitleCreateSerializer(instance, context=self.context).to_representation(instance)
-        # Используем текущий TitleSerializer для всех других запросов
-        return super().to_representation(instance)
-
 
 class TitleCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки POST запросов к модели Title."""
@@ -74,6 +65,17 @@ class TitleCreateSerializer(serializers.ModelSerializer):
                 'Год выпуска не может быть больше текущего'
             )
         return value
+
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'name': instance.name,
+            'year': instance.year,
+            'rating': None,
+            'description': instance.description,
+            'genre': GenreSerializer(instance.genre.all(), many=True).data,
+            'category': CategorySerializer(instance.category).data,
+        }
 
 
 class UsersSerializer(serializers.ModelSerializer):
