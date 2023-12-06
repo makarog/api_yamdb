@@ -40,7 +40,6 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'year',
                   'description', 'genre', 'category', 'rating')
 
-
     def get_rating(self, obj):
         """Получаем rating из аннотации queryset."""
         return getattr(obj, 'rating', None)
