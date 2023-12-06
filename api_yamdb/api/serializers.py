@@ -31,16 +31,12 @@ class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов к модели Title."""
     genre = GenreSerializer(many=True, required=True)
     category = CategorySerializer(required=True)
-    rating = serializers.IntegerField()
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'year',
                   'description', 'genre', 'category', 'rating')
-
-    def get_rating(self, obj):
-        """Получаем rating из аннотации queryset."""
-        return getattr(obj, 'rating', None)
 
     def to_representation(self, instance):
         """Переопределение to_representation для запросов."""
