@@ -102,4 +102,5 @@ class Command(BaseCommand):
                     pub_date=row['pub_date'],
                 )
 
-        self.stdout.write(self.style.SUCCESS('Successfully loaded initial data'))
+        self.stdout.write(
+            self.style.SUCCESS('Successfully loaded initial data'))

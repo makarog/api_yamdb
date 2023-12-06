@@ -1,13 +1,13 @@
 import datetime as dt
 from typing import Any
 
-from rest_framework import serializers
-from rest_framework.serializers import SlugRelatedField
-from rest_framework.relations import StringRelatedField
-from rest_framework.validators import UniqueValidator
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from rest_framework.relations import StringRelatedField
+from rest_framework.serializers import SlugRelatedField
+from rest_framework.validators import UniqueValidator
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
@@ -15,6 +15,7 @@ from users.models import User
 
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов к модели Genre."""
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
@@ -22,6 +23,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов к модели Category."""
+
     class Meta:
         model = Category
         fields = ('name', 'slug')
@@ -43,9 +45,12 @@ class TitleSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.method == 'POST':
             # Используем TitleCreateSerializer для ответов на POST запросы
-            return TitleCreateSerializer(
-                (instance, context=self.context).to_representation(instance)
+            return (
+                TitleCreateSerializer(instance,
+                                      context=self.context).to_representation(
+                    instance)
             )
+
         # Используем текущий TitleSerializer для всех других запросов
         return super().to_representation(instance)
 
